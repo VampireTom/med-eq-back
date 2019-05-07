@@ -21,6 +21,8 @@ public class Res {
 	private String phone;
 	private String borrowId;
 	private Integer borNum;
+	private String returnDate;
+	private String borrowDate;
 	public String getTypeId() {
 		return typeId;
 	}
@@ -140,6 +142,18 @@ public class Res {
 	}
 	public void setBorNum(Integer borNum) {
 		this.borNum = borNum;
+	}
+	public String getReturnDate() {
+		return returnDate;
+	}
+	public void setReturnDate(String returnDate) {
+		this.returnDate = returnDate;
+	}
+	public String getBorrowDate() {
+		return borrowDate;
+	}
+	public void setBorrowDate(String borrowDate) {
+		this.borrowDate = borrowDate;
 	}
 	
 }
