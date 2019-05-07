@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.Model.Department_D2;
+import com.example.demo.Model.Department;
 import com.example.demo.Model.Req;
 import com.example.demo.Repossitory.DepartmentRepossitory;
 
@@ -19,10 +19,10 @@ public class DepartmentController {
 	private DepartmentRepossitory departmentRepossitory;
 	
     @RequestMapping(value ="/findAllDepartment" , method = RequestMethod.POST)
-    public List<Department_D2> getAllDepartment(@RequestBody Req req){
+    public List<Department> getAllDepartment(@RequestBody Req req){
     	try {
-			Iterable<Department_D2> iterable = departmentRepossitory.findAll();
-			List<Department_D2> deList = Lists.newArrayList(iterable);
+			Iterable<Department> iterable = departmentRepossitory.findAll();
+			List<Department> deList = Lists.newArrayList(iterable);
 			return deList;
 		} catch (Exception e) {
 			e.printStackTrace();
