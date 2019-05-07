@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -168,8 +169,8 @@ public class BorrowController {
 	}
 
 	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/revert", method = RequestMethod.POST)
-	public String getRevert(@RequestBody Req req) {
+	@RequestMapping(value = "/saverevert", method = RequestMethod.POST)
+	public String getsaveRevert(@RequestBody Req req) {
 		try {
 			Object object = req.getBody();
 			Map<String, Object> map = (Map<String, Object>) object;
@@ -744,6 +745,50 @@ public class BorrowController {
 					}
 					res.setTypeName(type.getTypeName());
 					res.setTypeRemain(type.getTypeTotal() - type.getTypeBorrow());
+					res.setTypeNum(type.getTypeNum());
+					res.setTypeId(type.getTypeId());
+					list.add(res);
+				}
+			}
+			return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/getrevert", method = RequestMethod.POST)
+	private List<Res> getRevert(@RequestBody Req req) {
+		try {
+			Object object = req.getBody();
+			Map<String, Object> map = (Map<String, Object>) object;
+			System.out.println("map = " + map);
+			Iterable<Borrow> bowIte = borrowRepossitory.findAll();
+			List<Borrow> borrows = Lists.newArrayList(bowIte);
+			List<Res> list = new ArrayList<Res>();
+			for (Borrow borrow : borrows) {
+				Res res = new Res();
+				if ("I".equals(borrow.getStatus())) {
+					res.setBorrowId(borrow.getBorrowId());
+					res.setBorNum(borrow.getBorNum());
+					String borDate = borrow.getBorrowDate();
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+					SimpleDateFormat sdf1 = new SimpleDateFormat("dd.MM.yyyy");
+					Calendar cal = Calendar.getInstance();
+					Calendar cal1 = Calendar.getInstance();
+					cal.setTime(sdf.parse(borDate));
+					cal1.setTime(sdf.parse(borDate));
+					
+					Optional<Type> tOpt = typeRepossitory.findById(borrow.getTypeId());
+					Type type = new Type();
+					if (tOpt.isPresent()) {
+						type = tOpt.get();
+						cal.add(Calendar.DATE, type.getBorrowing());
+					}
+					res.setReturnDate(sdf1.format(cal.getTime()));
+					res.setBorrowDate(sdf1.format(cal1.getTime()));
+					res.setTypeName(type.getTypeName());
 					res.setTypeNum(type.getTypeNum());
 					res.setTypeId(type.getTypeId());
 					list.add(res);
