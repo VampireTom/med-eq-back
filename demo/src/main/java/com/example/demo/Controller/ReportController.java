@@ -10,10 +10,12 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import org.glassfish.jersey.internal.guava.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +24,7 @@ import com.example.demo.Model.Borrow;
 import com.example.demo.Model.Department;
 import com.example.demo.Model.Employee;
 import com.example.demo.Model.Position;
+import com.example.demo.Model.Req;
 import com.example.demo.Model.Type;
 import com.example.demo.Repossitory.BookingRepossitory;
 import com.example.demo.Repossitory.BorrowRepossitory;
@@ -60,21 +63,28 @@ public class ReportController {
 	@Autowired
 	private TypeRepossitory typeRepossitory;
 
-	private String getReport1(Type type1) {
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/reporttype", method = RequestMethod.POST)
+	public String getReporttype(@RequestBody Req req) {
+		Object object = req.getBody();
+		Map<String, Object> map = (Map<String, Object>) object;
+		System.out.println("map = " + map);
+
+//	private String getReport1(Type type1) {
 		Document doc = new Document();
 		try {
 			BaseFont fo = BaseFont.createFont("THSarabunNew.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream("test.pdf"));
 			doc.open();
 
-			Optional<Employee> employees = employeeRepossitory.findById(type1.getTypeId());
-			Employee employee = employees.isPresent() ? employees.get() : null;
+//			Optional<Employee> employees = employeeRepossitory.findById(type1.getTypeId());
+//			Employee employee = employees.isPresent() ? employees.get() : null;
+//
+//			Optional<Type> types = typeRepossitory.findById(type1.getTypeId());
+//			Type type = types.isPresent() ? types.get() : null;
 
-			Optional<Type> types = typeRepossitory.findById(type1.getTypeId());
-			Type type = types.isPresent() ? types.get() : null;
-
-//			Calendar cal = Calendar.getInstance();
-//			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
+			Calendar cal = Calendar.getInstance();
+			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
 //
 //			Calendar cal2 = Calendar.getInstance();
 //			cal2.add(Calendar.DATE, Integer.valueOf(type.getBorrowing()));
@@ -105,18 +115,17 @@ public class ReportController {
 
 			PdfPCell t1c4 = new PdfPCell(new Paragraph("เลขที่  ", new Font(fo, 14)));
 			t1c4.setBorder(Rectangle.NO_BORDER);
-			t1c3.setVerticalAlignment(Element.ALIGN_MIDDLE);
-			t1c3.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c5 = new PdfPCell(new Paragraph("วันที่   ", new Font(fo, 14)));
+			t1c4.setVerticalAlignment(Element.ALIGN_MIDDLE);
 			t1c4.setBorder(Rectangle.NO_BORDER);
-			t1c3.setVerticalAlignment(Element.ALIGN_MIDDLE);
-			t1c3.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t1c6 = new PdfPCell(new Paragraph("รายงนอุปกรณ์ที่ไม่เพียงพอ", new Font(fo, 26)));
-			t1c5.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t1c5.setVerticalAlignment(Element.ALIGN_CENTER);
+			PdfPCell t1c5 = new PdfPCell(new Paragraph("วันที่ "+sdf1.format(cal.getTime()) , new Font(fo, 14)));
+			t1c4.setBorder(Rectangle.NO_BORDER);
 			t1c5.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t1c6 = new PdfPCell(new Paragraph("รายงานอุปกรณ์ที่ไม่เพียงพอ", new Font(fo, 26)));
+			t1c6.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t1c6.setVerticalAlignment(Element.ALIGN_CENTER);
+			t1c6.setBorder(Rectangle.NO_BORDER);
 
 			t1.addCell(t1c1);
 			t1.addCell(t1c2);
@@ -155,37 +164,37 @@ public class ReportController {
 			t2c5.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
 			PdfPCell t2c6 = new PdfPCell(new Paragraph("จำนวนที่จอง", new Font(fo, 14)));
-			t2c5.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c5.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c7 = new PdfPCell(new Paragraph("1", new Font(fo, 14)));
 			t2c6.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c6.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c8 = new PdfPCell(new Paragraph(type.getTypeName(), new Font(fo, 14)));
+			PdfPCell t2c7 = new PdfPCell(new Paragraph("1", new Font(fo, 14)));
 			t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c8 = new PdfPCell(new Paragraph("Type -> type_name", new Font(fo, 14)));
+			t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
 //			PdfPCell t2c8 = new PdfPCell(new Paragraph(getBorNum().toString(), new Font(fo, 14)));
 //			t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
 //			t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c9 = new PdfPCell(new Paragraph(type.getTypeId(), new Font(fo, 14)));
+			PdfPCell t2c9 = new PdfPCell(new Paragraph("Type -> type_id", new Font(fo, 14)));
 			t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
 			PdfPCell t2c10 = new PdfPCell(
-					new Paragraph(type.getTypeTotal(), Integer.valueOf("TypeTotal").toString(), new Font(fo, 14)));
+					new Paragraph("Type -> type_total", new Font(fo, 14)));
 			t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
 			PdfPCell t2c11 = new PdfPCell(
-					new Paragraph(type.getTypeBorrow(), Integer.valueOf("TypeBorrow").toString(), new Font(fo, 14)));
+					new Paragraph("Type -> type_borrow", new Font(fo, 14)));
 			t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
 			PdfPCell t2c12 = new PdfPCell(
-					new Paragraph(type.getTypeBooking(), Integer.valueOf("TypeBooking").toString(), new Font(fo, 14)));
+					new Paragraph("Type -> type_booking", new Font(fo, 14)));
 			t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
@@ -230,22 +239,22 @@ public class ReportController {
 			t3c2.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c2.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c3 = new PdfPCell(new Paragraph(employee.getEmpName(), new Font(fo, 14)));
+			PdfPCell t3c3 = new PdfPCell(new Paragraph("Employee - > emp_name", new Font(fo, 14)));
 			t3c3.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c3.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c3.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c4 = new PdfPCell(new Paragraph(employee.getEmpName(), new Font(fo, 14)));
+			PdfPCell t3c4 = new PdfPCell(new Paragraph("(_________________________)", new Font(fo, 14)));
 			t3c4.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c4.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c4.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c5 = new PdfPCell(new Paragraph("(_________________________)", new Font(fo, 14)));
+			PdfPCell t3c5 = new PdfPCell(new Paragraph("วันที่ "+sdf1.format(cal.getTime()), new Font(fo, 14)));
 			t3c5.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c5.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c5.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c6 = new PdfPCell(new Paragraph("(_________________________)", new Font(fo, 14)));
+			PdfPCell t3c6 = new PdfPCell(new Paragraph("วันที่.................../............../...................", new Font(fo, 14)));
 			t3c6.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c6.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c6.setBorder(Rectangle.NO_BORDER);
@@ -273,29 +282,20 @@ public class ReportController {
 		return null;
 
 	}
-		private String getReport2(Type type2) {
+
+	private String getReport2(Type type2) {
 		Document doc = new Document();
 		try {
 			BaseFont fo = BaseFont.createFont("THSarabunNew.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream("test.pdf"));
 			doc.open();
 
-			Optional<Employee> employees = employeeRepossitory.findById(type2.getTypeId());
-			Employee employee = employees.isPresent() ? employees.get() : null;
-			
-			Optional<Department> departments = departmentRepossitory.findById(employee.getDepartmentId());
-			Department department = departments.isPresent() ? departments.get() : null;
-			
-			Optional<Type> types = typeRepossitory.findById(type2.getTypeId());
-			Type type = types.isPresent() ? types.get() : null;
-			
-		
-			
-			
-		}
-		catch (Exception e) {
-			 
+			Optional<Borrow> borrows = borrowRepossitory.findById(type2.getTypeId());
+			Borrow borrow = borrows.isPresent() ? borrows.get() : null;
+
+		} catch (Exception e) {
+
 		}
 		return null;
-}
+	}
 }
