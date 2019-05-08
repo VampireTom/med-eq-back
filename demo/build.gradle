@@ -26,4 +26,5 @@ dependencies {
 	runtimeOnly 'mysql:mysql-connector-java'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	compile 'com.google.guava:guava:27.1-jre'
+	compile group: 'com.itextpdf', name: 'itextpdf', version: '5.5.9'
 }
