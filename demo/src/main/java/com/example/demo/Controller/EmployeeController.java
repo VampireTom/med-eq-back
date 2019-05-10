@@ -129,7 +129,7 @@ public class EmployeeController {
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/editprofile", method = RequestMethod.POST)
-	public String editProfile(@RequestBody Req req) {
+	public Res editProfile(@RequestBody Req req) {
 		try {
 			Object object = req.getBody();
 			Map<String, Object> map = (Map<String, Object>) object;
@@ -147,7 +147,14 @@ public class EmployeeController {
 					employee.setPositionId(map.get("empposition") != null ? map.get("empposition").toString() : "");
 					employee.setDepartmentId(map.get("empdepartment") != null ? map.get("empdepartment").toString() : "");
 					employeeRepossitory.save(employee);
-					return "true";
+					res.setEmpName(map.get("empName").toString());
+					Optional<Position> posOpt = positionRepossitory.findById(map.get("empposition").toString());
+					Position position = new Position();
+					if(posOpt.isPresent()) {
+						position = posOpt.get();
+					}
+					res.setPositionName(position.getPositionName());
+					return res;
 				}
 			}
 		} catch (Exception e) {

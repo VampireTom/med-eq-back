@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.SortbyBooking;
 import com.example.demo.Model.Borrow;
 import com.example.demo.Model.Department;
 import com.example.demo.Model.Employee;
@@ -67,20 +69,25 @@ public class ReportController {
 	@RequestMapping(value = "/reporttype", method = RequestMethod.POST)
 	public String getReporttype(@RequestBody Req req) {
 		Object object = req.getBody();
+		Type type = new Type();
 		Map<String, Object> map = (Map<String, Object>) object;
 		System.out.println("map = " + map);
 		Document doc = new Document();
 		try {
+			String username = map.get("username") != null ? map.get("username").toString() : "";
 			BaseFont fo = BaseFont.createFont("THSarabunNew.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream("test.pdf"));
 			doc.open();
 
-//			Optional<Employee> employees = employeeRepossitory.findById(type1.getTypeId());
-//			Employee employee = employees.isPresent() ? employees.get() : null;
-//
-//			Optional<Type> types = typeRepossitory.findById(type1.getTypeId());
-//			Type type = types.isPresent() ? types.get() : null;
-
+			Optional<Employee> employees = employeeRepossitory.findById(username);
+			Employee employee = employees.isPresent() ? employees.get() : null;
+			
+			Iterable<Type> types = typeRepossitory.findAll();
+			List<Type> typeList = Lists.newArrayList(types);
+			
+			Collections.sort(typeList, new SortbyBooking()); 
+			type = typeList.get(typeList.size()-1);
+			
 			Calendar cal = Calendar.getInstance();
 			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
 //
@@ -176,23 +183,23 @@ public class ReportController {
 			t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c8 = new PdfPCell(new Paragraph("Type -> type_name", new Font(fo, 14)));
+			PdfPCell t2c8 = new PdfPCell(new Paragraph(type.getTypeName(), new Font(fo, 14)));
 			t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c9 = new PdfPCell(new Paragraph("Type -> type_id", new Font(fo, 14)));
+			PdfPCell t2c9 = new PdfPCell(new Paragraph(type.getTypeId(), new Font(fo, 14)));
 			t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c10 = new PdfPCell(new Paragraph("Type -> type_total", new Font(fo, 14)));
+			PdfPCell t2c10 = new PdfPCell(new Paragraph(type.getTypeTotal().toString(), new Font(fo, 14)));
 			t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c11 = new PdfPCell(new Paragraph("Type -> type_borrow", new Font(fo, 14)));
+			PdfPCell t2c11 = new PdfPCell(new Paragraph(type.getTypeBorrow().toString(), new Font(fo, 14)));
 			t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c12 = new PdfPCell(new Paragraph("Type -> type_booking", new Font(fo, 14)));
+			PdfPCell t2c12 = new PdfPCell(new Paragraph(type.getTypeBooking().toString(), new Font(fo, 14)));
 			t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
@@ -233,7 +240,7 @@ public class ReportController {
 			t3c2.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c2.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c3 = new PdfPCell(new Paragraph("Employee - > emp_name", new Font(fo, 14)));
+			PdfPCell t3c3 = new PdfPCell(new Paragraph(employee.getEmpName(), new Font(fo, 14)));
 			t3c3.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c3.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c3.setBorder(Rectangle.NO_BORDER);

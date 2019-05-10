@@ -160,6 +160,17 @@ public class BorrowController {
 			borrow.setStatus("W");
 			borrowRepossitory.save(borrow);
 
+			Optional<Type> opType = typeRepossitory.findById(borrow.getTypeId());
+			Type type = new Type();
+			if (opType.isPresent()) {
+				type = opType.get();
+				if (type != null) {
+					Integer bookNum = type.getTypeBooking() + borrow.getBorNum();
+					type.setTypeBooking(bookNum);
+					typeRepossitory.save(type);
+				}
+			}
+
 			String pdf = getBookingDoc(borrow);
 			return pdf;
 		} catch (Exception e) {
