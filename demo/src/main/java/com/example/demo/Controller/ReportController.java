@@ -32,7 +32,6 @@ import com.example.demo.Repossitory.BookingRepossitory;
 import com.example.demo.Repossitory.BorrowRepossitory;
 import com.example.demo.Repossitory.DepartmentRepossitory;
 import com.example.demo.Repossitory.EmployeeRepossitory;
-import com.example.demo.Repossitory.EquipmentRepossitory;
 import com.example.demo.Repossitory.PositionRepossitory;
 import com.example.demo.Repossitory.TypeRepossitory;
 import com.itextpdf.text.BaseColor;
@@ -58,8 +57,6 @@ public class ReportController {
 	private DepartmentRepossitory departmentRepossitory;
 	@Autowired
 	private EmployeeRepossitory employeeRepossitory;
-	@Autowired
-	private EquipmentRepossitory equipmentRepossitory;
 	@Autowired
 	private PositionRepossitory positionRepossitory;
 	@Autowired

@@ -68,7 +68,9 @@ public class BorrowController {
 			Map<String, Object> map = (Map<String, Object>) object;
 			System.out.println("map = " + map);
 			Borrow borrow = new Borrow();
-
+			Calendar cal = Calendar.getInstance();
+			DateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
+			DateFormat sdf2 = new SimpleDateFormat("yy");
 			if (map != null && map.size() > 0) {
 				if (map.get("borrowId") != null && !"".equals(map.get("borrowId").toString())) {
 					Optional<Borrow> borOpt = borrowRepossitory.findById(map.get("borrowId").toString());
@@ -76,9 +78,6 @@ public class BorrowController {
 						borrow = borOpt.get();
 					}
 				} else {
-					Calendar cal = Calendar.getInstance();
-					DateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
-					DateFormat sdf2 = new SimpleDateFormat("yy");
 					Integer i = Integer.valueOf(sdf2.format(cal.getTime())) + 43;
 					String s = i.toString();
 
@@ -102,6 +101,7 @@ public class BorrowController {
 					borrow.setBorNum(map.get("borNum") != null ? Integer.valueOf(map.get("borNum").toString()) : 0); // borNum
 				}
 			}
+			borrow.setBorrowDate(sdf1.format(cal.getTime()));
 			borrow.setStatus("I");
 			borrowRepossitory.save(borrow);
 

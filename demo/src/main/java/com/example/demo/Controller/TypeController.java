@@ -121,13 +121,14 @@ public class TypeController {
 			type.setTypeTotal(map.get("typeTotal") != null ? Integer.valueOf(map.get("typeTotal").toString()) : 0);
 			type.setTypeNum(map.get("typeNum") != null ? map.get("typeNum").toString() : "");
 			type.setBorrowing(map.get("borrowing") != null ? Integer.valueOf(map.get("borrowing").toString()) : 0);
+			type.setTypeBorrow(0);
+			type.setTypeBooking(0);
 
 			typeRepossitory.save(type);
 			return "true";
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		return null;
+		}		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -139,22 +140,20 @@ public class TypeController {
 			System.out.println("map = " + map);
 			Type type = new Type();
 			String typeId = map.get("typeId") != null ? map.get("typeId").toString() : "";
+			String typename = map.get("typeName") != null ? map.get("typeName").toString() : "";
 			Integer typeTotal = map.get("typeTotal") != null ? Integer.valueOf(map.get("typeTotal").toString()) : 0;
 			Optional<Type> types = typeRepossitory.findById(typeId);
-			//Res res = new Res();
+//			Res res = new Res();
 			if (types.isPresent()) {
 				type = types.get();
 				if (type != null) {
-					Integer typeTotal2 = type.getTypeTotal();
-					Integer typeTotal3 = typeTotal2 + typeTotal;
+
 					type.setTypeId(map.get("typeId") != null ? map.get("typeId").toString() : "");
-					type.setTypeTotal(typeTotal3);
-				
-				
+					type.setTypeName(typename);
+					type.setTypeTotal(typeTotal);
+
 					typeRepossitory.save(type);
-					
-			
-				//	return "true";
+					return "true";
 				}
 			}
 		} catch (Exception e) {
@@ -162,7 +161,7 @@ public class TypeController {
 		}
 		return null;
 	}
-	
+
 	@RequestMapping(value = "/getalltype", method = RequestMethod.POST)
 	public List<Type> getAllType(@RequestBody Req req) {
 		try {
