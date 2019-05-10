@@ -162,4 +162,16 @@ public class TypeController {
 		}
 		return null;
 	}
+	
+	@RequestMapping(value = "/getalltype", method = RequestMethod.POST)
+	public List<Type> getAllType(@RequestBody Req req) {
+		try {
+			Iterable<Type> iterable = typeRepossitory.findAll();
+			List<Type> typeList = Lists.newArrayList(iterable);
+			return typeList;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
