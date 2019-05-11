@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.Model.Booking;
 import com.example.demo.Model.Borrow;
 import com.example.demo.Model.Department;
 import com.example.demo.Model.Employee;

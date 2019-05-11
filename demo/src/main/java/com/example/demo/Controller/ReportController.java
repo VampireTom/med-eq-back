@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
@@ -27,8 +28,8 @@ import com.example.demo.Model.Department;
 import com.example.demo.Model.Employee;
 import com.example.demo.Model.Position;
 import com.example.demo.Model.Req;
+import com.example.demo.Model.Res;
 import com.example.demo.Model.Type;
-import com.example.demo.Repossitory.BookingRepossitory;
 import com.example.demo.Repossitory.BorrowRepossitory;
 import com.example.demo.Repossitory.DepartmentRepossitory;
 import com.example.demo.Repossitory.EmployeeRepossitory;
@@ -47,10 +48,10 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfStructTreeController.returnType;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import javassist.expr.NewArray;
+
 @RestController
 public class ReportController {
-	@Autowired
-	private BookingRepossitory bookingRepossitory;
 	@Autowired
 	private BorrowRepossitory borrowRepossitory;
 	@Autowired
@@ -78,16 +79,16 @@ public class ReportController {
 
 			Optional<Employee> employees = employeeRepossitory.findById(username);
 			Employee employee = employees.isPresent() ? employees.get() : null;
-			
+
 			Iterable<Type> types = typeRepossitory.findAll();
 			List<Type> typeList = Lists.newArrayList(types);
-			
-			Collections.sort(typeList, new SortbyBooking()); 
-			type = typeList.get(typeList.size()-1);
-			
+
+			Collections.sort(typeList, new SortbyBooking());
+			type = typeList.get(typeList.size() - 1);
+
 			Calendar cal = Calendar.getInstance();
 			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
-//
+
 //			Calendar cal2 = Calendar.getInstance();
 //			cal2.add(Calendar.DATE, Integer.valueOf(type.getBorrowing()));
 
@@ -282,18 +283,61 @@ public class ReportController {
 	}
 
 	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/reportstatus", method = RequestMethod.POST)
-	public String getReportstatus(@RequestBody Req req) {
+	@RequestMapping(value = "/reportlate", method = RequestMethod.POST)
+	public String getReportlate(@RequestBody Req req) {
 		Object object = req.getBody();
 		Map<String, Object> map = (Map<String, Object>) object;
 		System.out.println("map = " + map);
 		Document doc = new Document();
 		try {
+			String username = map.get("username") != null ? map.get("username").toString() : "";
+			Optional<Employee> users = employeeRepossitory.findById(username);
+			Employee user = users.isPresent() ? users.get() : null;
+
+			Calendar calendar = Calendar.getInstance();
+			DateFormat format = new SimpleDateFormat("yyyyMMdd");
+			DateFormat format2 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
+
+			Iterable<Borrow> borIte = borrowRepossitory.findAll();
+			List<Borrow> borrows = Lists.newArrayList(borIte);
+			List<Res> list = new ArrayList<Res>();
+			for (Borrow borrow : borrows) {
+				Calendar cal1 = Calendar.getInstance();
+				cal1.set(Integer.valueOf(borrow.getBorrowDate().substring(0, 4)),
+						Integer.valueOf(borrow.getBorrowDate().substring(4, 6)) - 1,
+						Integer.valueOf(borrow.getBorrowDate().substring(6)));
+				Optional<Type> typeOpt = typeRepossitory.findById(borrow.getTypeId());
+				Type type = typeOpt.isPresent() ? typeOpt.get() : null;
+				cal1.add(Calendar.DATE, Integer.valueOf(type.getBorrowing()));
+
+				Calendar cal2 = Calendar.getInstance();
+				cal2.set(Integer.valueOf(borrow.getBorrowDate().substring(0, 4)),
+						Integer.valueOf(borrow.getBorrowDate().substring(4, 6)) - 1,
+						Integer.valueOf(borrow.getBorrowDate().substring(6)));
+
+				if ("I".equals(borrow.getStatus())
+						&& format.format(calendar.getTime()).compareTo(format.format(cal1.getTime())) == 1) {
+					Optional<Employee> empOpt = employeeRepossitory.findById(borrow.getEmpId());
+					Employee employee = empOpt.isPresent() ? empOpt.get() : null;
+
+					Optional<Department> depOpt = departmentRepossitory.findById(employee.getDepartmentId());
+					Department department = depOpt.isPresent() ? depOpt.get() : null;
+
+					Res res = new Res();
+
+					res.setDepartmentName(department.getDepartmentName());
+					res.setTypeName(type.getTypeName());
+					res.setBorrowId(borrow.getBorrowId());
+					res.setBorrowDate(format2.format(cal2.getTime()));
+					res.setBorrowing(format2.format(cal1.getTime()));
+
+					list.add(res);
+				}
+			}
+
 			BaseFont fo = BaseFont.createFont("THSarabunNew.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream("test.pdf"));
 			doc.open();
-			Calendar cal = Calendar.getInstance();
-			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
 
 			PdfPTable t1 = new PdfPTable(1);
 			t1.setWidthPercentage(100); // Width 100%
@@ -326,7 +370,8 @@ public class ReportController {
 			t1c5.setVerticalAlignment(Element.ALIGN_CENTER);
 			t1c5.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t1c6 = new PdfPCell(new Paragraph("วันที่ " + sdf1.format(cal.getTime()), new Font(fo, 14)));
+			PdfPCell t1c6 = new PdfPCell(
+					new Paragraph("วันที่ " + format2.format(calendar.getTime()), new Font(fo, 14)));
 			t1c6.setVerticalAlignment(Element.ALIGN_CENTER);
 			t1c6.setBorder(Rectangle.NO_BORDER);
 
@@ -376,43 +421,47 @@ public class ReportController {
 			t2c6.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c6.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-			PdfPCell t2c7 = new PdfPCell(new Paragraph("1", new Font(fo, 14)));
-			t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c8 = new PdfPCell(new Paragraph("Department -> department_name", new Font(fo, 14)));
-			t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c9 = new PdfPCell(new Paragraph("Type -> type_name", new Font(fo, 14)));
-			t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c10 = new PdfPCell(new Paragraph("Borrow -> borrow_id", new Font(fo, 14)));
-			t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c11 = new PdfPCell(new Paragraph("Borrow -> borrow_date", new Font(fo, 14)));
-			t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c12 = new PdfPCell(new Paragraph("......", new Font(fo, 14)));
-			t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
 			t2.addCell(t2c1);
 			t2.addCell(t2c2);
 			t2.addCell(t2c3);
 			t2.addCell(t2c4);
 			t2.addCell(t2c5);
 			t2.addCell(t2c6);
-			t2.addCell(t2c7);
-			t2.addCell(t2c8);
-			t2.addCell(t2c9);
-			t2.addCell(t2c10);
-			t2.addCell(t2c11);
-			t2.addCell(t2c12);
 
+			Integer i = 0;
+			for (Res res : list) {
+				i += 1;
+				PdfPCell t2c7 = new PdfPCell(new Paragraph(i.toString(), new Font(fo, 14)));
+				t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c8 = new PdfPCell(new Paragraph(res.getDepartmentName(), new Font(fo, 14)));
+				t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c9 = new PdfPCell(new Paragraph(res.getTypeName(), new Font(fo, 14)));
+				t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c10 = new PdfPCell(new Paragraph(res.getBorrowId(), new Font(fo, 14)));
+				t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c11 = new PdfPCell(new Paragraph(res.getBorrowDate(), new Font(fo, 14)));
+				t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c12 = new PdfPCell(new Paragraph(res.getBorrowing(), new Font(fo, 14)));
+				t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				t2.addCell(t2c7);
+				t2.addCell(t2c8);
+				t2.addCell(t2c9);
+				t2.addCell(t2c10);
+				t2.addCell(t2c11);
+				t2.addCell(t2c12);
+			}
 			doc.add(t2);
 
 			PdfPTable t3 = new PdfPTable(2);
@@ -437,7 +486,7 @@ public class ReportController {
 			t3c2.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c2.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c3 = new PdfPCell(new Paragraph("Employee - > emp_name", new Font(fo, 14)));
+			PdfPCell t3c3 = new PdfPCell(new Paragraph(user.getEmpName(), new Font(fo, 14)));
 			t3c3.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c3.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c3.setBorder(Rectangle.NO_BORDER);
@@ -447,7 +496,8 @@ public class ReportController {
 			t3c4.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c4.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t3c5 = new PdfPCell(new Paragraph("วันที่ " + sdf1.format(cal.getTime()), new Font(fo, 14)));
+			PdfPCell t3c5 = new PdfPCell(
+					new Paragraph("วันที่ " + format2.format(calendar.getTime()), new Font(fo, 14)));
 			t3c5.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t3c5.setVerticalAlignment(Element.ALIGN_CENTER);
 			t3c5.setBorder(Rectangle.NO_BORDER);
@@ -482,16 +532,25 @@ public class ReportController {
 	}
 
 	@SuppressWarnings("unchecked")
-	@RequestMapping(value = "/reportalert", method = RequestMethod.POST)
-	public String getReportalert(@RequestBody Req req) {
+	@RequestMapping(value = "/reportstatus", method = RequestMethod.POST)
+	public String getReportstatus(@RequestBody Req req) {
 		Object object = req.getBody();
 		Map<String, Object> map = (Map<String, Object>) object;
 		System.out.println("map = " + map);
 		Document doc = new Document();
 		try {
+			String username = map.get("username") != null ? map.get("username").toString() : "";
+			Iterable<Type> type = typeRepossitory.findAll();
+			List<Type> types = Lists.newArrayList(type);
+			List<Res> list = new ArrayList<Res>();
+
 			BaseFont fo = BaseFont.createFont("THSarabunNew.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
 			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream("test.pdf"));
 			doc.open();
+			
+			Optional<Employee> employees = employeeRepossitory.findById(username);
+			Employee employee = employees.isPresent() ? employees.get() : null;
+
 			Calendar cal = Calendar.getInstance();
 			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
 
@@ -522,63 +581,21 @@ public class ReportController {
 			PdfPCell t1c4 = new PdfPCell(new Paragraph(".", new Font(fo, 16, 0, BaseColor.WHITE)));
 			t1c4.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t1c5 = new PdfPCell(new Paragraph("ใบแจ้งเตือนการจองอุปกรณ์ทางการแพทย์", new Font(fo, 26)));
-			t1c5.setHorizontalAlignment(Element.ALIGN_CENTER);
+			PdfPCell t1c5 = new PdfPCell(new Paragraph("เลขที่ ", new Font(fo, 14)));
 			t1c5.setVerticalAlignment(Element.ALIGN_CENTER);
 			t1c5.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t1c6 = new PdfPCell(new Paragraph("เรียน  หัวหน้าหน่วยงาน", new Font(fo, 16)));
+			PdfPCell t1c6 = new PdfPCell(new Paragraph("วันที่ " + sdf1.format(cal.getTime()), new Font(fo, 14)));
 			t1c6.setVerticalAlignment(Element.ALIGN_CENTER);
 			t1c6.setBorder(Rectangle.NO_BORDER);
 
-			PdfPCell t1c7 = new PdfPCell(new Paragraph("เรื่อง  กำหนดส่งคืนอุปกรณ์", new Font(fo, 16)));
+			PdfPCell t1c7 = new PdfPCell(new Paragraph("รายงานสถานะอุปกรณ์", new Font(fo, 26)));
+			t1c7.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t1c7.setVerticalAlignment(Element.ALIGN_CENTER);
 			t1c7.setBorder(Rectangle.NO_BORDER);
 
 			PdfPCell t1c8 = new PdfPCell(new Paragraph(".", new Font(fo, 14, 0, BaseColor.WHITE)));
 			t1c8.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c9 = new PdfPCell(new Paragraph("เลขที่ใบยืม " + "Borrow -> borrow_id " + "ยืมโดยคุณ "
-					+ "Employee - > emp_name " + "หน่วยงาน " + "Department -> department_name", new Font(fo, 16)));
-			t1c9.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c9.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c10 = new PdfPCell(new Paragraph("อุปกรณ์การแพทย์ที่ท่านได้ทำการยืม โดยมี", new Font(fo, 16)));
-			t1c10.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c10.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c11 = new PdfPCell(
-					new Paragraph("Type -> type_name" + "จำนวน   1  Type -> typr_num", new Font(fo, 16)));
-			t1c11.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c11.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c12 = new PdfPCell(new Paragraph(
-					"ณ ตอนนี้ อุปกรณ์ที่ท่านยืมไปนั้น เลยกำหนดในการยืมแล้ว ขอให้ท่านนำอุปกรณ์มาคืน", new Font(fo, 16)));
-			t1c12.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c12.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c13 = new PdfPCell(
-					new Paragraph("หรือ มาทำการยืมใหม่ได้ที่หน่วยงาน อุปกรณ์การแพทย์ ค่ะ ", new Font(fo, 16)));
-			t1c13.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c13.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c14 = new PdfPCell(new Paragraph("ขอบคุณมา ณ โอกาสนี้ ", new Font(fo, 16)));
-			t1c14.setVerticalAlignment(Element.ALIGN_CENTER);
-			t1c14.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c15 = new PdfPCell(new Paragraph(".", new Font(fo, 16, 0, BaseColor.WHITE)));
-			t1c15.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c16 = new PdfPCell(new Paragraph(".", new Font(fo, 16, 0, BaseColor.WHITE)));
-			t1c16.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c17 = new PdfPCell(new Paragraph("(Employee - > emp_name) ", new Font(fo, 16)));
-			t1c17.setVerticalAlignment(Element.ALIGN_LEFT);
-			t1c17.setBorder(Rectangle.NO_BORDER);
-
-			PdfPCell t1c18 = new PdfPCell(new Paragraph("Department-> department_name ", new Font(fo, 16)));
-			t1c18.setVerticalAlignment(Element.ALIGN_LEFT);
-			t1c18.setBorder(Rectangle.NO_BORDER);
 
 			t1.addCell(t1c1);
 			t1.addCell(t1c2);
@@ -588,18 +605,133 @@ public class ReportController {
 			t1.addCell(t1c6);
 			t1.addCell(t1c7);
 			t1.addCell(t1c8);
-			t1.addCell(t1c9);
-			t1.addCell(t1c10);
-			t1.addCell(t1c11);
-			t1.addCell(t1c12);
-			t1.addCell(t1c13);
-			t1.addCell(t1c14);
-			t1.addCell(t1c15);
-			t1.addCell(t1c16);
-			t1.addCell(t1c17);
-			t1.addCell(t1c18);
 
 			doc.add(t1);
+			PdfPTable t2 = new PdfPTable(6);
+			t2.setSpacingBefore(10f);
+			t2.setSpacingAfter(10f);
+			float[] t2cw = { 1f, 3f, 2f, 2f, 1f, 1f };
+
+			t2.setWidths(t2cw);
+
+			PdfPCell t2c1 = new PdfPCell(new Paragraph("ลำดับ", new Font(fo, 14)));
+			t2c1.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c1.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c2 = new PdfPCell(new Paragraph("รายการอุปกรณ์", new Font(fo, 14)));
+			t2c2.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c2.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c3 = new PdfPCell(new Paragraph("รหัสอุปกรณ์", new Font(fo, 14)));
+			t2c3.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c3.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c4 = new PdfPCell(new Paragraph("จำนวนที่อยู่ในคลัง", new Font(fo, 14)));
+			t2c4.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c4.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c5 = new PdfPCell(new Paragraph("จำนวนที่ถูกยืม", new Font(fo, 14)));
+			t2c5.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c5.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			PdfPCell t2c6 = new PdfPCell(new Paragraph("จำนวนที่จอง", new Font(fo, 14)));
+			t2c6.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t2c6.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+			t2.addCell(t2c1);
+			t2.addCell(t2c2);
+			t2.addCell(t2c3);
+			t2.addCell(t2c4);
+			t2.addCell(t2c5);
+			t2.addCell(t2c6);
+
+			Integer i = 0;
+			for (Type res : types) {
+				i += 1;
+				PdfPCell t2c7 = new PdfPCell(new Paragraph(i.toString(), new Font(fo, 14)));
+				t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c8 = new PdfPCell(new Paragraph(res.getTypeName(), new Font(fo, 14)));
+				t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c9 = new PdfPCell(new Paragraph(res.getTypeId(), new Font(fo, 14)));
+				t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c10 = new PdfPCell(new Paragraph(res.getTypeTotal().toString(), new Font(fo, 14)));
+				t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c11 = new PdfPCell(new Paragraph(res.getTypeBorrow().toString(), new Font(fo, 14)));
+				t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				PdfPCell t2c12 = new PdfPCell(new Paragraph(res.getTypeBooking().toString(), new Font(fo, 14)));
+				t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
+				t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+				t2.addCell(t2c7);
+				t2.addCell(t2c8);
+				t2.addCell(t2c9);
+				t2.addCell(t2c10);
+				t2.addCell(t2c11);
+				t2.addCell(t2c12);
+			}
+			doc.add(t2);
+			PdfPTable t3 = new PdfPTable(2);
+			t3.setWidthPercentage(100); // Width 100%
+			t3.setSpacingBefore(10f); // Space before table
+			t3.setSpacingAfter(10f); // Space after table
+			// Set Column widths
+			float[] t3cw = { 1f, 1f };
+
+			t3.setWidths(t3cw);
+
+			PdfPCell t3c1 = new PdfPCell(new Paragraph(
+					"ลงชื่อ...............................................................ผู้จัดทำ", new Font(fo, 16)));
+			t3c1.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c1.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c1.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t3c2 = new PdfPCell(
+					new Paragraph("ลงชื่อ...............................................................ผู้ตรวจสอบ",
+							new Font(fo, 16)));
+			t3c2.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c2.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c2.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t3c3 = new PdfPCell(new Paragraph(employee.getEmpName(), new Font(fo, 14)));
+			t3c3.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c3.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c3.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t3c4 = new PdfPCell(new Paragraph("(_________________________)", new Font(fo, 14)));
+			t3c4.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c4.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c4.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t3c5 = new PdfPCell(
+					new Paragraph("วันที่ " + sdf1.format(cal.getTime()), new Font(fo, 14)));
+			t3c5.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c5.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c5.setBorder(Rectangle.NO_BORDER);
+
+			PdfPCell t3c6 = new PdfPCell(
+					new Paragraph("วันที่.................../............../...................", new Font(fo, 14)));
+			t3c6.setHorizontalAlignment(Element.ALIGN_CENTER);
+			t3c6.setVerticalAlignment(Element.ALIGN_CENTER);
+			t3c6.setBorder(Rectangle.NO_BORDER);
+
+			t3.addCell(t3c1);
+			t3.addCell(t3c2);
+			t3.addCell(t3c3);
+			t3.addCell(t3c4);
+			t3.addCell(t3c5);
+			t3.addCell(t3c6);
+
+			doc.add(t3);
 
 			doc.close();
 			writer.close();
@@ -607,8 +739,11 @@ public class ReportController {
 			byte[] inputFile = Files.readAllBytes(Paths.get("test.pdf"));
 			byte[] encodedBytes = Base64.getEncoder().encode(inputFile);
 			String encodedString = new String(encodedBytes);
+
 			return "{\"src\":\"" + encodedString + "\"}";
-		} catch (DocumentException de) {
+		} catch (
+
+		DocumentException de) {
 			de.printStackTrace();
 		} catch (IOException ioe) {
 			ioe.printStackTrace();

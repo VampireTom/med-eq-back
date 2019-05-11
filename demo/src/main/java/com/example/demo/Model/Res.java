@@ -23,6 +23,7 @@ public class Res {
 	private Integer borNum;
 	private String returnDate;
 	private String borrowDate;
+	private String borrowing;
 	public String getTypeId() {
 		return typeId;
 	}
@@ -154,6 +155,12 @@ public class Res {
 	}
 	public void setBorrowDate(String borrowDate) {
 		this.borrowDate = borrowDate;
+	}
+	public String getBorrowing() {
+		return borrowing;
+	}
+	public void setBorrowing(String borrowing) {
+		this.borrowing = borrowing;
 	}
 	
 }
