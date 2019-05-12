@@ -67,7 +67,6 @@ public class ReportController {
 	@RequestMapping(value = "/reporttype", method = RequestMethod.POST)
 	public String getReporttype(@RequestBody Req req) {
 		Object object = req.getBody();
-		Type type = new Type();
 		Map<String, Object> map = (Map<String, Object>) object;
 		System.out.println("map = " + map);
 		Document doc = new Document();
@@ -82,15 +81,11 @@ public class ReportController {
 
 			Iterable<Type> types = typeRepossitory.findAll();
 			List<Type> typeList = Lists.newArrayList(types);
-
+			
 			Collections.sort(typeList, new SortbyBooking());
-			type = typeList.get(typeList.size() - 1);
 
 			Calendar cal = Calendar.getInstance();
 			DateFormat sdf1 = new SimpleDateFormat("dd MMMM yyyy", new Locale("th", "TH"));
-
-//			Calendar cal2 = Calendar.getInstance();
-//			cal2.add(Calendar.DATE, Integer.valueOf(type.getBorrowing()));
 
 			PdfPTable t1 = new PdfPTable(1);
 			t1.setWidthPercentage(100); // Width 100%
@@ -102,17 +97,14 @@ public class ReportController {
 			t1.setWidths(t1cw);
 
 			PdfPCell t1c1 = new PdfPCell(new Paragraph("โรงพยาบาลราชวิถี ", new Font(fo, 14)));
-			// t1c1.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t1c1.setVerticalAlignment(Element.ALIGN_MIDDLE);
 			t1c1.setBorder(Rectangle.NO_BORDER);
 
 			PdfPCell t1c2 = new PdfPCell(new Paragraph("2 แขวงทุ่งพญาไท   เขตราชเทวี ", new Font(fo, 14)));
-			// t1c2.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t1c2.setVerticalAlignment(Element.ALIGN_MIDDLE);
 			t1c2.setBorder(Rectangle.NO_BORDER);
 
 			PdfPCell t1c3 = new PdfPCell(new Paragraph("กรุงเทพมหานคร  10400", new Font(fo, 14)));
-			// t1c3.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t1c3.setVerticalAlignment(Element.ALIGN_MIDDLE);
 			t1c3.setBorder(Rectangle.NO_BORDER);
 
@@ -152,7 +144,7 @@ public class ReportController {
 			float[] t2cw = { 1f, 2f, 2f, 1f, 1f, 1f };
 
 			t2.setWidths(t2cw);
-
+			
 			PdfPCell t2c1 = new PdfPCell(new Paragraph("ลำดับ", new Font(fo, 14)));
 			t2c1.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c1.setVerticalAlignment(Element.ALIGN_MIDDLE);
@@ -176,43 +168,50 @@ public class ReportController {
 			PdfPCell t2c6 = new PdfPCell(new Paragraph("จำนวนที่จอง", new Font(fo, 14)));
 			t2c6.setHorizontalAlignment(Element.ALIGN_CENTER);
 			t2c6.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c7 = new PdfPCell(new Paragraph("1", new Font(fo, 14)));
-			t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c8 = new PdfPCell(new Paragraph(type.getTypeName(), new Font(fo, 14)));
-			t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c9 = new PdfPCell(new Paragraph(type.getTypeId(), new Font(fo, 14)));
-			t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c10 = new PdfPCell(new Paragraph(type.getTypeTotal().toString(), new Font(fo, 14)));
-			t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c11 = new PdfPCell(new Paragraph(type.getTypeBorrow().toString(), new Font(fo, 14)));
-			t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
-			PdfPCell t2c12 = new PdfPCell(new Paragraph(type.getTypeBooking().toString(), new Font(fo, 14)));
-			t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
-			t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
-
+			
 			t2.addCell(t2c1);
 			t2.addCell(t2c2);
 			t2.addCell(t2c3);
 			t2.addCell(t2c4);
 			t2.addCell(t2c5);
 			t2.addCell(t2c6);
-			t2.addCell(t2c7);
-			t2.addCell(t2c8);
-			t2.addCell(t2c9);
-			t2.addCell(t2c10);
-			t2.addCell(t2c11);
-			t2.addCell(t2c12);
+
+			Integer i = 0;
+			for(Type type : typeList) {
+				if(!(type.getTypeTotal()-type.getTypeBorrow() > 0)) {
+					i += 1;
+					PdfPCell t2c7 = new PdfPCell(new Paragraph(i.toString(), new Font(fo, 14)));
+					t2c7.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c7.setVerticalAlignment(Element.ALIGN_MIDDLE);
+	
+					PdfPCell t2c8 = new PdfPCell(new Paragraph(type.getTypeName(), new Font(fo, 14)));
+					t2c8.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c8.setVerticalAlignment(Element.ALIGN_MIDDLE);
+	
+					PdfPCell t2c9 = new PdfPCell(new Paragraph(type.getTypeId(), new Font(fo, 14)));
+					t2c9.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c9.setVerticalAlignment(Element.ALIGN_MIDDLE);
+	
+					PdfPCell t2c10 = new PdfPCell(new Paragraph(type.getTypeTotal().toString(), new Font(fo, 14)));
+					t2c10.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c10.setVerticalAlignment(Element.ALIGN_MIDDLE);
+	
+					PdfPCell t2c11 = new PdfPCell(new Paragraph(type.getTypeBorrow().toString(), new Font(fo, 14)));
+					t2c11.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c11.setVerticalAlignment(Element.ALIGN_MIDDLE);
+	
+					PdfPCell t2c12 = new PdfPCell(new Paragraph(type.getTypeBooking().toString(), new Font(fo, 14)));
+					t2c12.setHorizontalAlignment(Element.ALIGN_CENTER);
+					t2c12.setVerticalAlignment(Element.ALIGN_MIDDLE);
+					
+					t2.addCell(t2c7);
+					t2.addCell(t2c8);
+					t2.addCell(t2c9);
+					t2.addCell(t2c10);
+					t2.addCell(t2c11);
+					t2.addCell(t2c12);
+				}
+			}
 
 			doc.add(t2);
 

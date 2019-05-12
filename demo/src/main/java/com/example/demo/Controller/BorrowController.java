@@ -111,6 +111,9 @@ public class BorrowController {
 				type = opType.get();
 				if (type != null) {
 					Integer borrowNum = type.getTypeBorrow() + borrow.getBorNum();
+					if (map.get("borrowId") != null && !"".equals(map.get("borrowId").toString())) {
+						type.setTypeBooking(type.getTypeBooking() - borrow.getBorNum());
+					}
 					type.setTypeBorrow(borrowNum);
 					typeRepossitory.save(type);
 				}
