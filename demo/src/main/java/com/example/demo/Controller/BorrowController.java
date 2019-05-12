@@ -97,7 +97,8 @@ public class BorrowController {
 					borrow.setBorrowDate(sdf1.format(cal.getTime()));
 					borrow.setEmpId(map.get("userId") != null ? map.get("userId").toString() : "");
 					borrow.setTypeId(map.get("typeId") != null ? map.get("typeId").toString() : "");
-					borrow.setBorNum(map.get("borNum") != null ? Integer.valueOf(map.get("borNum").toString()) : 0); // borNum
+					borrow.setBorNum(map.get("borNum") != null ? Integer.valueOf(map.get("borNum").toString()) : 0);
+					borrow.setTmpBorNum(map.get("borNum") != null ? Integer.valueOf(map.get("borNum").toString()) : 0);
 				}
 			}
 			borrow.setBorrowDate(sdf1.format(cal.getTime()));
@@ -155,7 +156,8 @@ public class BorrowController {
 			borrow.setBorrowDate(sdf1.format(cal.getTime()));
 			borrow.setEmpId(map.get("userId") != null ? map.get("userId").toString() : "");
 			borrow.setTypeId(map.get("typeId") != null ? map.get("typeId").toString() : "");
-			borrow.setBorNum(map.get("bookNum") != null ? Integer.valueOf(map.get("bookNum").toString()) : 0); // borNum
+			borrow.setBorNum(map.get("bookNum") != null ? Integer.valueOf(map.get("bookNum").toString()) : 0);
+			borrow.setTmpBorNum(map.get("bookNum") != null ? Integer.valueOf(map.get("bookNum").toString()) : 0);
 			borrow.setStatus("W");
 			borrowRepossitory.save(borrow);
 
@@ -188,6 +190,7 @@ public class BorrowController {
 			Borrow borrow = new Borrow();
 
 			String borrowId = map.get("borrowId") != null ? map.get("borrowId").toString() : "";
+			String revertNum = map.get("revertNum") != null ? map.get("revertNum").toString() : "";
 			Optional<Borrow> borOpt = borrowRepossitory.findById(borrowId);
 			if (borOpt.isPresent()) {
 				borrow = borOpt.get();
@@ -195,7 +198,11 @@ public class BorrowController {
 					Calendar cal = Calendar.getInstance();
 					DateFormat sdf1 = new SimpleDateFormat("yyyyMMdd");
 					borrow.setRevertDate(sdf1.format(cal.getTime()));
-					borrow.setStatus("C");
+					Integer borRemain = borrow.getTmpBorNum()-Integer.valueOf(revertNum);
+					borrow.setTmpBorNum(borRemain);
+					if(borRemain == 0) {
+						borrow.setStatus("C");
+					}
 					borrowRepossitory.save(borrow);
 
 					Optional<Type> opType = typeRepossitory.findById(borrow.getTypeId());
@@ -203,7 +210,7 @@ public class BorrowController {
 					if (opType.isPresent()) {
 						type = opType.get();
 						if (type != null) {
-							Integer borrowNum = type.getTypeBorrow() - borrow.getBorNum();
+							Integer borrowNum = type.getTypeBorrow() -  Integer.valueOf(revertNum);
 							type.setTypeBorrow(borrowNum);
 							typeRepossitory.save(type);
 
@@ -215,18 +222,12 @@ public class BorrowController {
 									break;
 								}
 								Integer remain = type.getTypeTotal() - type.getTypeBorrow();
-								Integer revate = type.getTypeRevert() - type.getTypeBorrow();
 								if ("W".equalsIgnoreCase(b.getStatus()) && borrow.getTypeId().equals(type.getTypeId())
-										&& (remain >= b.getBorNum()))
-
-									if ("W".equalsIgnoreCase(b.getStatus())
-											&& borrow.getTypeId().equals(type.getTypeId())
-											&& (revate >= b.getBorRevert())) {
-
-										b.setStatus("N");
-										borrowRepossitory.save(b);
-										break;
-									}
+										&& (remain >= b.getBorNum())) {
+									b.setStatus("N");
+									borrowRepossitory.save(b);
+									break;
+								}
 							}
 						}
 					}
@@ -787,7 +788,7 @@ public class BorrowController {
 				Res res = new Res();
 				if ("I".equals(borrow.getStatus())) {
 					res.setBorrowId(borrow.getBorrowId());
-					res.setBorNum(borrow.getBorNum());
+					res.setBorNum(borrow.getTmpBorNum());
 					String borDate = borrow.getBorrowDate();
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 					SimpleDateFormat sdf1 = new SimpleDateFormat("dd.MM.yyyy");

@@ -13,17 +13,11 @@ public class Borrow {
 	private String empId;
 	private String typeId;
 	private Integer borNum;
-	private Integer borRevert;
 	private String status;
 	private String revertDate;
+	private Integer tmpBorNum;
 	public String getBorrowId() {
 		return borrowId;
-	}
-	public Integer getBorRevert() {
-		return borRevert;
-	}
-	public void setBorRevert(Integer borRevert) {
-		this.borRevert = borRevert;
 	}
 	public void setBorrowId(String borrowId) {
 		this.borrowId = borrowId;
@@ -63,6 +57,12 @@ public class Borrow {
 	}
 	public void setRevertDate(String revertDate) {
 		this.revertDate = revertDate;
+	}
+	public Integer getTmpBorNum() {
+		return tmpBorNum;
+	}
+	public void setTmpBorNum(Integer tmpBorNum) {
+		this.tmpBorNum = tmpBorNum;
 	}
 	
 }
