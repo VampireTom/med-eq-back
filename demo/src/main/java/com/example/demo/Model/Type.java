@@ -14,8 +14,15 @@ public class Type {
 	private Integer typeTotal;
 	private Integer typeBorrow;
 	private Integer typeBooking;
+	private Integer typeRevert;
 	private String typeNum;
 	private Integer borrowing;
+	public Integer getTypeRevert() {
+		return typeRevert;
+	}
+	public void setTypeRevert(Integer typeRevert) {
+		this.typeRevert = typeRevert;
+	}
 	public String getTypeId() {
 		return typeId;
 	}

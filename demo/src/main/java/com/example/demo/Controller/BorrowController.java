@@ -215,12 +215,18 @@ public class BorrowController {
 									break;
 								}
 								Integer remain = type.getTypeTotal() - type.getTypeBorrow();
+								Integer revate = type.getTypeRevert() - type.getTypeBorrow();
 								if ("W".equalsIgnoreCase(b.getStatus()) && borrow.getTypeId().equals(type.getTypeId())
-										&& (remain >= b.getBorNum())) {
-									b.setStatus("N");
-									borrowRepossitory.save(b);
-									break;
-								}
+										&& (remain >= b.getBorNum()))
+
+									if ("W".equalsIgnoreCase(b.getStatus())
+											&& borrow.getTypeId().equals(type.getTypeId())
+											&& (revate >= b.getBorRevert())) {
+
+										b.setStatus("N");
+										borrowRepossitory.save(b);
+										break;
+									}
 							}
 						}
 					}
@@ -789,7 +795,7 @@ public class BorrowController {
 					Calendar cal1 = Calendar.getInstance();
 					cal.setTime(sdf.parse(borDate));
 					cal1.setTime(sdf.parse(borDate));
-					
+
 					Optional<Type> tOpt = typeRepossitory.findById(borrow.getTypeId());
 					Type type = new Type();
 					if (tOpt.isPresent()) {
